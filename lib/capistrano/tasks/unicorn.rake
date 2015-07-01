@@ -16,6 +16,7 @@ namespace :load do
     set :unicorn_worker_timeout, 30
     set :unicorn_tcp_listen_port, 8080
     set :unicorn_use_tcp, -> { roles(:app, :web).count > 1 } # use tcp if web and app nodes are on different servers
+    set :unicorn_use_sudo, false
     set :unicorn_app_env, -> { fetch(:rails_env) || fetch(:stage) }
     # set :unicorn_user # default set in `unicorn:defaults` task
 
@@ -63,7 +64,11 @@ namespace :unicorn do
     desc "#{command} unicorn"
     task command do
       on roles :app do
-        execute :service, fetch(:unicorn_service), command
+        if fetch(:unicorn_use_sudo)
+          sudo :service, fetch(:unicorn_service), command
+        else
+          execute :service, fetch(:unicorn_service), command
+        end
       end
     end
   end
